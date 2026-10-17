@@ -83,7 +83,7 @@ Everything below runs on every push.
 
 | Job | What it proves |
 |---|---|
-| **Terraform** | `fmt`, `validate`, then a real `terraform plan` without credentials, which creates nothing. The plan is turned into JSON and checked against **17 promises** ([`check_plan.sh`](terraform/tests/check_plan.sh)): no allow rule open to the world, SSH from the IAP range only, shielded VM, OS Login, no project roles for the service account, snapshots, and so on. **Nine bad or borderline inputs** ([`negative.sh`](terraform/tests/negative.sh)) must be refused with the module's own messages. Then `tflint` and Checkov. |
+| **Terraform** | `fmt`, `validate`, then a real `terraform plan` without credentials, which creates nothing. The plan is turned into JSON and checked against **17 promises** ([`check_plan.sh`](terraform/tests/check_plan.sh)): no allow rule open to the world, SSH from the IAP range only, shielded VM, OS Login, no project roles for the service account, snapshots, and so on. **Nine bad or borderline inputs** ([`negative.sh`](terraform/tests/negative.sh)): seven must be refused with the module's own messages, two acknowledged or harmless ones must still be accepted. Then `tflint` and Checkov. |
 | **Ansible lint** | `ansible-lint` on the *production* profile, `yamllint`, `shellcheck`, a syntax check. |
 | **Converge** on Ubuntu 22.04 and 24.04 | The playbook runs against a real Ubuntu VM with systemd (the GitHub runner): real `apt`, real units, real `nftables` and fail2ban. Then [`verify.sh`](tests/verify.sh) checks the result, **and the playbook runs a second time and must report `changed=0`**. |
 
