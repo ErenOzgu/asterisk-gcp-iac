@@ -91,6 +91,14 @@ Everything below runs on every push.
 
 **What CI cannot do:** `terraform apply` against a real project (that needs billing and credentials), and run the playbook on a Compute Engine VM. The runner is an Ubuntu VM, not a GCE instance, so GCE-specific behaviour (OS Login, the IAP tunnel itself) is covered by the design and the documentation, not by a test.
 
+## Things the tests caught
+
+These are real bugs the checks found while the roles were written, and why `verify.sh` looks at behaviour instead of config files:
+
+- **fail2ban on Ubuntu 24.04 watched nothing.** Debian's defaults put every jail on the systemd journal, so a jail with a `logpath` was quietly ignoring its log file. The jail looked healthy and even banned addresses by hand. Only a check that the jail lists the security log as its source caught it; the jail now sets `backend = auto`.
+- **`sshd -t` needs `/run/sshd`.** On a host where sshd is socket-activated and idle, validating the hardening snippet failed until the directory existed.
+- **A resource that does not exist.** `google_compute_disk` has no way to attach a snapshot schedule; it takes its own attachment resource. `terraform validate` said so within a minute.
+
 ## Layout
 
 ```text

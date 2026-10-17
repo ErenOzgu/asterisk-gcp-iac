@@ -18,6 +18,9 @@ enabled = false
 [asterisk]
 enabled = true
 filter = asterisk
+# Ubuntu 24.04 defaults every jail to the systemd journal. A jail that reads a
+# file would then watch nothing, so ask for file watching explicitly.
+backend = auto
 port = {{ pbx_sip_port }}
 protocol = udp
 logpath = /var/log/asterisk/security_log
