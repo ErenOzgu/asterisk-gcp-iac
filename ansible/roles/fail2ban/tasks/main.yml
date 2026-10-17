@@ -20,3 +20,17 @@
     name: fail2ban
     enabled: true
     state: started
+
+# fail2ban takes a few seconds to load its jails after a restart. Waiting here
+# turns a jail that cannot start (say, a missing log file) into a failed play
+# instead of a silent gap in protection.
+- name: Apply the jail configuration now
+  ansible.builtin.meta: flush_handlers
+
+- name: Wait for the Asterisk jail to come up
+  ansible.builtin.command: fail2ban-client status asterisk
+  register: fail2ban_jail
+  until: fail2ban_jail.rc == 0
+  retries: 15
+  delay: 2
+  changed_when: false

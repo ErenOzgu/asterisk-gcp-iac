@@ -49,6 +49,7 @@ check "AMI listens on localhost only" bash -c "grep -q '127.0.0.1:5038' <<<'$lis
 check "pjsip.conf is readable by asterisk only" bash -c "[ \"\$(stat -c '%a %U %G' /etc/asterisk/pjsip.conf)\" = '640 root asterisk' ]"
 
 echo "# fail2ban"
+for _ in $(seq 1 20); do fail2ban-client status asterisk >/dev/null 2>&1 && break; sleep 1; done # jails load a few seconds after a restart
 check "the security log records the failed logins" grep -q 'ChallengeResponseFailed\|InvalidAccountID' /var/log/asterisk/security_log
 matches="$(fail2ban-regex /var/log/asterisk/security_log asterisk 2>&1 | sed -n 's/^Failregex: \([0-9]*\) total.*/\1/p')"
 check "fail2ban's asterisk filter matches those lines (matched: ${matches:-0})" test "${matches:-0}" -ge 1
