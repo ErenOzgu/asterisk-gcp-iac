@@ -49,6 +49,7 @@ check "exactly one public address exists" \
   '[.resource_changes[] | select(.type == "google_compute_address")] | length == 1'
 check "the subnet writes flow logs" \
   '.resource_changes[] | select(.type == "google_compute_subnetwork") | .change.after.log_config | length == 1'
+# shellcheck disable=SC2016 # $p is a jq variable, not a shell one
 check "the VM has a dedicated service account that gets no project roles" \
   '. as $p
    | ([$p.resource_changes[] | select(.type == "google_service_account")] | length == 1)
