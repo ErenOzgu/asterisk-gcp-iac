@@ -1,0 +1,23 @@
+# {{ ansible_managed }}
+# .local files are read after every .conf file, so these settings win over
+# Debian's defaults-debian.conf.
+[DEFAULT]
+ignoreip = {{ fail2ban_ignoreip | join(' ') }}
+bantime = {{ fail2ban_bantime }}
+findtime = {{ fail2ban_findtime }}
+maxretry = {{ fail2ban_maxretry }}
+# Same packet filter as the host firewall; no iptables needed.
+banaction = nftables-multiport
+banaction_allports = nftables-allports
+
+# SSH is only reachable through IAP, so every failed login would be counted
+# against Google's tunnel addresses. Access control is IAM and OS Login instead.
+[sshd]
+enabled = false
+
+[asterisk]
+enabled = true
+filter = asterisk
+port = {{ pbx_sip_port }}
+protocol = udp
+logpath = /var/log/asterisk/security_log

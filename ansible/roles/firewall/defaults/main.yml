@@ -1,0 +1,10 @@
+---
+firewall_enabled: true
+# Google's IAP range: the only way into the VM is an authenticated IAP tunnel.
+firewall_ssh_sources:
+  - 35.235.240.0/20
+# Required: who may speak SIP. No default on purpose.
+firewall_sip_sources: []
+# Empty means the same sources as SIP.
+firewall_rtp_sources: []
+firewall_monitoring_sources: []

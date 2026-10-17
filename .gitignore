@@ -1,0 +1,10 @@
+ansible/inventory/hosts.ini
+ansible/group_vars/asterisk/vault.yml
+*.retry
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+!*.tfvars.example
+crash.log
+.vault-pass

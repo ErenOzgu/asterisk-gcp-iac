@@ -1,0 +1,116 @@
+---
+- name: Check the exporter settings
+  ansible.builtin.assert:
+    that:
+      - monitoring_exporter_ami_secret | length >= 16
+      - monitoring_exporter_ami_secret is not search('[\s"\\]')
+      - ansible_facts.architecture in monitoring_exporter_arch_map
+    fail_msg: >-
+      monitoring_exporter_ami_secret needs at least 16 characters without spaces,
+      quotes or backslashes, and the CPU architecture must be x86_64 or aarch64.
+    quiet: true
+  no_log: true
+
+# ---- node_exporter
+- name: Install node_exporter
+  ansible.builtin.apt:
+    name: prometheus-node-exporter
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+  when: monitoring_node_exporter
+
+- name: Set the node_exporter listen address
+  ansible.builtin.copy:
+    dest: /etc/default/prometheus-node-exporter
+    owner: root
+    group: root
+    mode: "0644"
+    content: |
+      # {{ ansible_managed }}
+      ARGS="--web.listen-address={{ monitoring_listen_address }}:{{ pbx_node_exporter_port }}"
+  when: monitoring_node_exporter
+  notify: Restart node_exporter
+
+- name: Enable node_exporter at boot and start it now
+  ansible.builtin.systemd:
+    name: prometheus-node-exporter
+    enabled: true
+    state: started
+  when: monitoring_node_exporter
+
+# ---- asterisk-exporter
+- name: Give the exporter an AMI user
+  ansible.builtin.template:
+    src: manager-exporter.conf.j2
+    dest: /etc/asterisk/manager.d/exporter.conf
+    owner: root
+    group: asterisk
+    mode: "0640"
+  no_log: true
+  notify: Reload asterisk
+
+- name: Create the exporter's install directory
+  ansible.builtin.file:
+    path: "{{ monitoring_exporter_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+# get_url verifies the tarball against the release's SHA256SUMS file.
+- name: Download the exporter release
+  ansible.builtin.get_url:
+    url: "{{ monitoring_exporter_download_base }}/{{ monitoring_exporter_version }}/{{ monitoring_exporter_tarball }}"
+    dest: "{{ monitoring_exporter_dir }}/{{ monitoring_exporter_tarball }}"
+    checksum: "sha256:{{ monitoring_exporter_download_base }}/{{ monitoring_exporter_version }}/SHA256SUMS"
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Unpack the exporter
+  ansible.builtin.unarchive:
+    src: "{{ monitoring_exporter_dir }}/{{ monitoring_exporter_tarball }}"
+    dest: "{{ monitoring_exporter_dir }}"
+    remote_src: true
+    extra_opts:
+      - --strip-components=1
+    creates: "{{ monitoring_exporter_dir }}/asterisk-exporter"
+
+- name: Point /usr/local/bin at this version
+  ansible.builtin.file:
+    src: "{{ monitoring_exporter_dir }}/asterisk-exporter"
+    dest: /usr/local/bin/asterisk-exporter
+    state: link
+  notify: Restart asterisk-exporter
+
+- name: Store the exporter's AMI credentials
+  ansible.builtin.template:
+    src: asterisk-exporter.env.j2
+    dest: /etc/asterisk-exporter.env
+    owner: root
+    group: root
+    mode: "0600"
+  no_log: true
+  notify: Restart asterisk-exporter
+
+- name: Install the exporter's systemd unit
+  ansible.builtin.template:
+    src: asterisk-exporter.service.j2
+    dest: /etc/systemd/system/asterisk-exporter.service
+    owner: root
+    group: root
+    mode: "0644"
+  notify:
+    - Reload systemd
+    - Restart asterisk-exporter
+
+# The unit has to be known to systemd before it can be enabled.
+- name: Pick up the new unit
+  ansible.builtin.meta: flush_handlers
+
+- name: Enable the exporter at boot and start it now
+  ansible.builtin.systemd:
+    name: asterisk-exporter
+    enabled: true
+    state: started

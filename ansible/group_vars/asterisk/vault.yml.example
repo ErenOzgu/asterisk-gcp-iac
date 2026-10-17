@@ -1,0 +1,6 @@
+---
+# Copy to vault.yml, fill in, then: ansible-vault encrypt group_vars/asterisk/vault.yml
+# Generate each value with: openssl rand -base64 24
+vault_endpoint_101_password: "change-me"
+vault_endpoint_102_password: "change-me"
+vault_exporter_ami_secret: "change-me"

@@ -1,0 +1,42 @@
+#!/usr/sbin/nft -f
+# {{ ansible_managed }}
+#
+# Host firewall: a second layer behind the VPC firewall rules. Default is drop;
+# only the sources listed in the Ansible variables get in. This file only
+# touches its own table.
+{% macro source_set(name, cidrs) %}
+  set {{ name }} {
+    type ipv4_addr
+    flags interval
+{% if cidrs | length > 0 %}
+    elements = { {{ cidrs | unique | join(', ') }} }
+{% endif %}
+  }
+{% endmacro %}
+
+table inet asterisk_fw
+delete table inet asterisk_fw
+
+table inet asterisk_fw {
+{{ source_set('ssh_sources', firewall_ssh_sources) }}
+{{ source_set('sip_sources', firewall_sip_sources) }}
+{{ source_set('rtp_sources', firewall_rtp_sources if firewall_rtp_sources | length > 0 else firewall_sip_sources) }}
+{{ source_set('monitoring_sources', firewall_monitoring_sources) }}
+
+  chain input {
+    type filter hook input priority 0; policy drop;
+
+    ct state invalid drop
+    ct state established,related accept
+    iifname "lo" accept
+
+    ip protocol icmp icmp type { echo-request, destination-unreachable, time-exceeded } limit rate 20/second accept
+    ip6 nexthdr icmpv6 accept
+    udp sport 67 udp dport 68 accept comment "DHCP lease renewal"
+
+    ip saddr @ssh_sources tcp dport 22 accept
+    ip saddr @sip_sources udp dport {{ pbx_sip_port }} accept
+    ip saddr @rtp_sources udp dport {{ pbx_rtp_start }}-{{ pbx_rtp_end }} accept
+    ip saddr @monitoring_sources tcp dport { {{ pbx_node_exporter_port }}, {{ pbx_exporter_port }} } accept
+  }
+}

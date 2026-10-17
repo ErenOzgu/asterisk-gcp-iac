@@ -1,0 +1,13 @@
+# {{ ansible_managed }}
+/var/log/asterisk/security_log {
+    weekly
+    rotate {{ asterisk_security_log_retention_weeks }}
+    missingok
+    notifempty
+    compress
+    delaycompress
+    create 0640 asterisk asterisk
+    postrotate
+        /usr/sbin/asterisk -rx 'logger reload' > /dev/null 2>&1 || true
+    endscript
+}

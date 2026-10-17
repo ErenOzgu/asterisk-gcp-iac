@@ -1,0 +1,15 @@
+; {{ ansible_managed }}
+[general]
+static = yes
+writeprotect = yes
+
+; Every endpoint in pjsip.conf lands here. Only authenticated phones can reach it.
+[internal]
+; Echo test: dial 600 and hear yourself.
+exten = 600,1,Answer()
+ same = n,Echo()
+ same = n,Hangup()
+
+; Dial another extension by number.
+exten = _XXX,1,Dial(PJSIP/${EXTEN},20)
+ same = n,Hangup()

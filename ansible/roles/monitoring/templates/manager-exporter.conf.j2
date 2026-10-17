@@ -1,0 +1,9 @@
+; {{ ansible_managed }}
+; Read-only user for asterisk-exporter: status and list actions only, localhost only.
+[{{ monitoring_exporter_ami_user }}]
+secret = {{ monitoring_exporter_ami_secret }}
+deny = 0.0.0.0/0.0.0.0
+permit = 127.0.0.1/255.255.255.255
+; The exporter logs in with Events: off. AMI authorises actions by the write class.
+read =
+write = system,reporting

@@ -1,0 +1,7 @@
+; {{ ansible_managed }}
+[general]
+rtpstart = {{ pbx_rtp_start }}
+rtpend = {{ pbx_rtp_end }}
+; Only accept RTP from the address the media was negotiated with.
+strictrtp = yes
+icesupport = no

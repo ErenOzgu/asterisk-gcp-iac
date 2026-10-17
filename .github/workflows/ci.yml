@@ -1,0 +1,137 @@
+---
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  terraform:
+    name: Terraform
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: terraform
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.9.8"
+          terraform_wrapper: false
+      - name: Format
+        run: terraform fmt -check -recursive -diff
+      - name: Init
+        run: terraform init -backend=false -input=false
+      - name: Validate
+        run: terraform validate
+      - name: Plan (no credentials, nothing is created)
+        env:
+          GOOGLE_OAUTH_ACCESS_TOKEN: plan-only-token
+        run: |
+          terraform plan -input=false -lock=false -var-file=tests/ci.tfvars -out=tfplan
+          terraform show -json tfplan > plan.json
+      - name: The plan keeps the module's promises
+        run: tests/check_plan.sh plan.json
+      - name: Bad inputs are refused with the module's own messages
+        run: tests/negative.sh
+      - uses: terraform-linters/setup-tflint@v4
+        with:
+          tflint_version: v0.54.0
+      - name: tflint
+        run: |
+          tflint --init
+          tflint
+      - name: Checkov (policy as code)
+        run: |
+          pip install --quiet checkov
+          checkov -d . --framework terraform --quiet --compact --skip-download
+
+  ansible-lint:
+    name: Ansible lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install --quiet ansible-core ansible-lint yamllint shellcheck-py
+      - run: yamllint -c .yamllint ansible .github
+      - run: ansible-lint
+        working-directory: ansible
+      - run: ansible-playbook --syntax-check -i inventory/ci.ini site.yml
+        working-directory: ansible
+      - run: shellcheck -S style scripts/*.sh tests/*.sh terraform/tests/*.sh
+      - name: The inventory generator works
+        env:
+          OS_LOGIN_USER: demo_example_com
+          TF_OUTPUT_JSON: |
+            {
+              "instance_name": {"value": "asterisk"},
+              "zone": {"value": "europe-west3-b"},
+              "project_id": {"value": "demo-project"},
+              "external_ip": {"value": "34.1.2.3"},
+              "subnet_cidr": {"value": "10.10.0.0/24"}
+            }
+        run: |
+          scripts/make-inventory.sh
+          ansible-inventory -i ansible/inventory/hosts.ini --host asterisk | grep -q '"ansible_user": "demo_example_com"'
+          rm ansible/inventory/hosts.ini
+
+  converge:
+    name: Converge on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-22.04, ubuntu-24.04]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install --quiet ansible-core
+
+      - name: Throwaway secrets
+        run: |
+          {
+            echo "EP101_PASSWORD=$(openssl rand -hex 16)"
+            echo "EP102_PASSWORD=$(openssl rand -hex 16)"
+            echo "AMI_SECRET=$(openssl rand -hex 16)"
+          } >> "$GITHUB_ENV"
+      - name: Variables for this run
+        run: |
+          cat > ansible/ci-vars.yml <<VARS
+          vault_endpoint_101_password: "${EP101_PASSWORD}"
+          vault_endpoint_102_password: "${EP102_PASSWORD}"
+          vault_exporter_ami_secret: "${AMI_SECRET}"
+          firewall_sip_sources: ["198.51.100.0/24", "203.0.113.10/32"]
+          firewall_monitoring_sources: ["10.20.0.5/32"]
+          asterisk_external_ip: "203.0.113.50"
+          asterisk_local_net: "10.0.0.0/8"
+          VARS
+
+      # The runner is a real Ubuntu VM with systemd, so this is the same code path
+      # as on a GCE instance: apt, nftables, systemd units, fail2ban.
+      - name: Converge (first run)
+        working-directory: ansible
+        run: ansible-playbook -i inventory/ci.ini site.yml -e @ci-vars.yml --diff 2>&1 | tee ../converge-1.log
+        shell: bash
+      - name: Verify the host
+        run: sudo -E tests/verify.sh
+      - name: Converge again, nothing may change
+        working-directory: ansible
+        run: |
+          ansible-playbook -i inventory/ci.ini site.yml -e @ci-vars.yml 2>&1 | tee ../converge-2.log
+          grep -E 'changed=0 .*failed=0' ../converge-2.log
+        shell: bash
+      - name: Verify again
+        run: sudo -E tests/verify.sh
+      - name: Logs on failure
+        if: failure()
+        run: |
+          sudo journalctl -u asterisk -u asterisk-exporter -u fail2ban -u nftables --no-pager -n 120 || true
+          sudo tail -n 40 /var/log/asterisk/messages.log /var/log/fail2ban.log || true

@@ -1,0 +1,7 @@
+---
+monitoring_exporter_arch_map:
+  x86_64: amd64
+  aarch64: arm64
+monitoring_exporter_arch: "{{ monitoring_exporter_arch_map[ansible_facts.architecture] }}"
+monitoring_exporter_tarball: "asterisk-exporter-{{ monitoring_exporter_version }}.linux-{{ monitoring_exporter_arch }}.tar.gz"
+monitoring_exporter_dir: "/opt/asterisk-exporter/{{ monitoring_exporter_version }}"

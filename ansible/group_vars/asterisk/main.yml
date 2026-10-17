@@ -1,0 +1,19 @@
+---
+# Settings for the PBX host. Secrets live in vault.yml (see vault.yml.example).
+
+# From `terraform output external_ip` and `terraform output subnet_cidr`.
+asterisk_external_ip: ""
+asterisk_local_net: "10.10.0.0/24"
+
+# Must match sip_source_ranges / rtp_source_ranges / monitoring_source_ranges in
+# terraform.tfvars: the host firewall is a second layer behind the VPC rules.
+firewall_sip_sources: []
+firewall_rtp_sources: [] # empty = same as the SIP sources
+firewall_monitoring_sources: []
+
+# Extensions. Passwords come from the vault (at least 16 characters).
+asterisk_endpoints:
+  - name: "101"
+    password: "{{ vault_endpoint_101_password }}"
+  - name: "102"
+    password: "{{ vault_endpoint_102_password }}"

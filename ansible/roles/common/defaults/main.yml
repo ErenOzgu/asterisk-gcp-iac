@@ -1,0 +1,6 @@
+---
+common_packages:
+  - ca-certificates
+  - curl
+  - unattended-upgrades
+common_ssh_hardening: true

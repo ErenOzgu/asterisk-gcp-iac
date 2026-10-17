@@ -1,0 +1,9 @@
+; {{ ansible_managed }}
+[general]
+dateformat = %F %T
+
+[logfiles]
+console => notice,warning,error
+messages.log => notice,warning,error
+; Failed registrations and unknown callers. fail2ban reads this file.
+security_log => security

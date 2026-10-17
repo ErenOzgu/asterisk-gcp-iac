@@ -1,0 +1,23 @@
+---
+- name: Asterisk PBX
+  hosts: asterisk
+  become: true
+  roles:
+    - role: common
+    - role: firewall
+    - role: asterisk
+    - role: fail2ban
+    - role: monitoring
+
+  post_tasks:
+    # Handlers (config reloads) have run by now, so this checks the end result:
+    # the exporter can log in to Asterisk's manager interface and reports it up.
+    - name: Wait until the exporter reports Asterisk as up
+      ansible.builtin.uri:
+        url: "http://{{ '127.0.0.1' if monitoring_listen_address == '0.0.0.0' else monitoring_listen_address }}:{{ pbx_exporter_port }}/metrics"
+        return_content: true
+      register: site_exporter_metrics
+      until: "'asterisk_up 1' in (site_exporter_metrics.content | default(''))"
+      retries: 12
+      delay: 5
+      changed_when: false

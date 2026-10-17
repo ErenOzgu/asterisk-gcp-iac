@@ -1,0 +1,6 @@
+; {{ ansible_managed }}
+[modules]
+autoload = yes
+{% for module in asterisk_disabled_modules %}
+noload = {{ module }}
+{% endfor %}

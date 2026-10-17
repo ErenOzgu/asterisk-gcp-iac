@@ -1,0 +1,10 @@
+---
+fail2ban_bantime: 1h
+fail2ban_findtime: 10m
+fail2ban_maxretry: 5
+# Never ban these. The IAP range is here because every admin login arrives from
+# it: banning one of its addresses would lock everyone out.
+fail2ban_ignoreip:
+  - 127.0.0.1/8
+  - ::1
+  - 35.235.240.0/20

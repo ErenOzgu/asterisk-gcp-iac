@@ -1,0 +1,10 @@
+---
+# Ports that more than one role needs to agree on.
+pbx_sip_port: 5060
+pbx_rtp_start: 10000
+pbx_rtp_end: 20000
+pbx_exporter_port: 9650
+pbx_node_exporter_port: 9100
+
+# Appears at the top of every templated file.
+ansible_managed: "Managed by Ansible (asterisk-gcp-iac). Local changes will be overwritten."

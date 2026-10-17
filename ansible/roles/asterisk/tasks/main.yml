@@ -1,0 +1,88 @@
+---
+- name: Check the endpoint definitions
+  ansible.builtin.assert:
+    that:
+      - item.name is match('^[0-9A-Za-z_-]+$')
+      - item.password | length >= 16
+      - item.password is not search('[\s"\\]')
+    fail_msg: >-
+      Endpoint "{{ item.name }}": the name may only contain letters, digits, - and _,
+      and the password needs at least 16 characters without spaces, quotes or backslashes.
+    quiet: true
+  loop: "{{ asterisk_endpoints }}"
+  loop_control:
+    label: "{{ item.name }}"
+  no_log: true
+
+- name: Install Asterisk
+  ansible.builtin.apt:
+    name: asterisk
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: Create the directory for configuration drop-ins
+  ansible.builtin.file:
+    path: /etc/asterisk/manager.d
+    state: directory
+    owner: root
+    group: asterisk
+    mode: "0750"
+
+- name: Install the configuration that needs a full restart
+  ansible.builtin.template:
+    src: modules.conf.j2
+    dest: /etc/asterisk/modules.conf
+    owner: root
+    group: asterisk
+    mode: "0640"
+  notify: Restart asterisk
+
+- name: Install the configuration that reloads in place
+  ansible.builtin.template:
+    src: "{{ item }}.j2"
+    dest: "/etc/asterisk/{{ item }}"
+    owner: root
+    group: asterisk
+    mode: "0640"
+  loop:
+    - rtp.conf
+    - logger.conf
+    - manager.conf
+    - extensions.conf
+  notify: Reload asterisk
+
+# Holds the extensions' passwords: keep them out of the output and out of --diff.
+- name: Install the SIP configuration
+  ansible.builtin.template:
+    src: pjsip.conf.j2
+    dest: /etc/asterisk/pjsip.conf
+    owner: root
+    group: asterisk
+    mode: "0640"
+  no_log: true
+  notify: Reload asterisk
+
+- name: Make sure the security log exists before anything tails it
+  ansible.builtin.file:
+    path: /var/log/asterisk/security_log
+    state: touch
+    owner: asterisk
+    group: asterisk
+    mode: "0640"
+    modification_time: preserve
+    access_time: preserve
+
+- name: Rotate the security log
+  ansible.builtin.template:
+    src: logrotate-security.j2
+    dest: /etc/logrotate.d/asterisk-security
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Enable Asterisk at boot and start it now
+  ansible.builtin.systemd:
+    name: asterisk
+    enabled: true
+    state: started

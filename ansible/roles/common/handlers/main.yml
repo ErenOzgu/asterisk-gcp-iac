@@ -1,0 +1,6 @@
+---
+# try-reload-or-restart does nothing when the unit is not running, which is the
+# case on hosts where sshd is socket-activated and idle.
+- name: Reload sshd
+  ansible.builtin.command: systemctl try-reload-or-restart ssh # noqa command-instead-of-module
+  changed_when: true

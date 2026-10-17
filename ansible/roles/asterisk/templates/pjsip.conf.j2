@@ -1,0 +1,43 @@
+; {{ ansible_managed }}
+[global]
+type = global
+; Do not advertise "Asterisk PBX 20.x" to scanners.
+user_agent = PBX
+
+[transport-udp]
+type = transport
+protocol = udp
+bind = 0.0.0.0:{{ pbx_sip_port }}
+{% if asterisk_external_ip | length > 0 and asterisk_local_net | length > 0 %}
+external_signaling_address = {{ asterisk_external_ip }}
+external_media_address = {{ asterisk_external_ip }}
+local_net = {{ asterisk_local_net }}
+{% endif %}
+{% for endpoint in asterisk_endpoints %}
+
+; ---- extension {{ endpoint.name }}
+[{{ endpoint.name }}]
+type = endpoint
+context = internal
+disallow = all
+allow = {{ asterisk_codecs | join(',') }}
+auth = {{ endpoint.name }}
+aors = {{ endpoint.name }}
+callerid = "{{ endpoint.callerid | default(endpoint.name) }}" <{{ endpoint.name }}>
+direct_media = no
+rtp_symmetric = yes
+force_rport = yes
+rewrite_contact = yes
+
+[{{ endpoint.name }}]
+type = auth
+auth_type = userpass
+username = {{ endpoint.name }}
+password = {{ endpoint.password }}
+
+[{{ endpoint.name }}]
+type = aor
+max_contacts = 1
+remove_existing = yes
+qualify_frequency = 30
+{% endfor %}

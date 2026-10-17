@@ -1,0 +1,10 @@
+---
+- name: Restart asterisk
+  ansible.builtin.systemd:
+    name: asterisk
+    state: restarted
+
+# Re-reads PJSIP, the dialplan, AMI, logging and RTP without dropping calls.
+- name: Reload asterisk
+  ansible.builtin.command: asterisk -rx "core reload"
+  changed_when: true

@@ -1,0 +1,12 @@
+---
+monitoring_node_exporter: true
+
+monitoring_exporter_version: v0.1.0
+monitoring_exporter_download_base: https://github.com/ErenOzgu/asterisk-exporter/releases/download
+# AMI user for the exporter. Required: at least 16 characters.
+monitoring_exporter_ami_user: exporter
+monitoring_exporter_ami_secret: ""
+monitoring_exporter_confbridge: true
+
+# 0.0.0.0 = every interface; the firewalls decide who may connect.
+monitoring_listen_address: 0.0.0.0

@@ -1,0 +1,24 @@
+---
+# Extensions: [{name: "101", password: "...", callerid: "Reception"}]. Names are
+# digits, letters, - and _. Passwords must be at least 16 characters.
+asterisk_endpoints: []
+
+# Public address of the VM (terraform output external_ip) and the VPC subnet.
+# With both set, PJSIP advertises the public address in SIP and SDP.
+asterisk_external_ip: ""
+asterisk_local_net: ""
+
+asterisk_codecs:
+  - ulaw
+  - alaw
+  - g722
+
+# Legacy channel drivers nobody here uses: not loading them removes attack surface.
+asterisk_disabled_modules:
+  - chan_sip.so
+  - chan_iax2.so
+  - chan_skinny.so
+  - chan_mgcp.so
+  - chan_unistim.so
+
+asterisk_security_log_retention_weeks: 8
