@@ -50,7 +50,9 @@ check "exactly one public address exists" \
 check "the subnet writes flow logs" \
   '.resource_changes[] | select(.type == "google_compute_subnetwork") | .change.after.log_config | length == 1'
 check "the VM has a dedicated service account that gets no project roles" \
-  '[.resource_changes[] | select(.type == "google_service_account")] | length == 1 and ([.resource_changes[] | select(.type == "google_project_iam_member" or .type == "google_project_iam_binding")] | length == 0)'
+  '. as $p
+   | ([$p.resource_changes[] | select(.type == "google_service_account")] | length == 1)
+     and ([$p.resource_changes[] | select(.type == "google_project_iam_member" or .type == "google_project_iam_binding")] | length == 0)'
 check "the boot disk is snapshotted daily and kept for a week" \
   '.resource_changes[] | select(.type == "google_compute_resource_policy") | .change.after.snapshot_schedule_policy[0] | .schedule[0].daily_schedule[0].days_in_cycle == 1 and .retention_policy[0].max_retention_days == 7'
 check "each admin gets OS Login, an IAP tunnel and the right to act as the VM account" \

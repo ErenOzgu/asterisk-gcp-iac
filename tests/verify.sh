@@ -14,13 +14,14 @@ phone_pid=""
 trap '[ -n "$phone_pid" ] && kill "$phone_pid" 2>/dev/null' EXIT
 
 check() { # check "description" command...
-  local desc="$1"
+  local desc="$1" out
   shift
-  if "$@" >/dev/null 2>&1; then
+  if out="$("$@" 2>&1)"; then
     echo "[PASS] $desc"
     pass=$((pass + 1))
   else
     echo "[FAIL] $desc"
+    [ -n "$out" ] && echo "$out" | tail -n 4 | sed 's/^/         /'
     fail=$((fail + 1))
   fi
 }
