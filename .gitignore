@@ -8,3 +8,4 @@ ansible/group_vars/asterisk/vault.yml
 !*.tfvars.example
 crash.log
 .vault-pass
+!terraform/tests/ci.tfvars

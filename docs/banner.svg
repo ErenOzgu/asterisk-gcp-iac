@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="420" viewBox="0 0 1280 420" role="img" aria-labelledby="t d">
+  <title id="t">asterisk-gcp-iac</title>
+  <desc id="d">Terraform and Ansible for a hardened Asterisk PBX on Google Cloud, verified in CI.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0d1117"/>
+      <stop offset="1" stop-color="#1b2230"/>
+    </linearGradient>
+    <linearGradient id="glow" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#58a6ff" stop-opacity="0.2"/>
+      <stop offset="1" stop-color="#58a6ff" stop-opacity="0"/>
+    </linearGradient>
+    <pattern id="grid" width="32" height="32" patternUnits="userSpaceOnUse">
+      <path d="M32 0H0V32" fill="none" stroke="#ffffff" stroke-opacity="0.035"/>
+    </pattern>
+  </defs>
+  <rect width="1280" height="420" fill="url(#bg)"/>
+  <rect width="1280" height="420" fill="url(#grid)"/>
+  <rect width="640" height="420" fill="url(#glow)"/>
+
+  <g font-family="'Segoe UI', 'Helvetica Neue', Helvetica, Arial, sans-serif">
+    <text x="64" y="128" font-size="13" letter-spacing="3" fill="#58a6ff" font-weight="600">TERRAFORM  ·  ANSIBLE  ·  ASTERISK</text>
+    <text x="62" y="196" font-size="58" font-weight="700" fill="#f0f6fc">asterisk-gcp-iac</text>
+    <text x="64" y="244" font-size="22" fill="#9aa7b8">A hardened Asterisk PBX on Google Cloud,</text>
+    <text x="64" y="274" font-size="22" fill="#9aa7b8">built from code and checked on every push.</text>
+
+    <g font-size="14" font-weight="600" fill="#d0d7de">
+      <rect x="64" y="304" width="136" height="34" rx="17" fill="#ffffff" fill-opacity="0.07" stroke="#ffffff" stroke-opacity="0.14"/>
+      <text x="132" y="326" text-anchor="middle">IAP-only SSH</text>
+      <rect x="212" y="304" width="178" height="34" rx="17" fill="#ffffff" fill-opacity="0.07" stroke="#ffffff" stroke-opacity="0.14"/>
+      <text x="301" y="326" text-anchor="middle">nftables + fail2ban</text>
+      <rect x="402" y="304" width="196" height="34" rx="17" fill="#ffffff" fill-opacity="0.07" stroke="#ffffff" stroke-opacity="0.14"/>
+      <text x="500" y="326" text-anchor="middle">Asterisk 18 · 20 in CI</text>
+    </g>
+  </g>
+
+  <g transform="translate(700 56)">
+    <rect width="516" height="308" rx="12" fill="#0b0f14" stroke="#ffffff" stroke-opacity="0.12"/>
+    <rect width="516" height="38" rx="12" fill="#ffffff" fill-opacity="0.05"/>
+    <circle cx="22" cy="19" r="6" fill="#f85149" fill-opacity="0.85"/>
+    <circle cx="42" cy="19" r="6" fill="#d29922" fill-opacity="0.85"/>
+    <circle cx="62" cy="19" r="6" fill="#3fb950" fill-opacity="0.85"/>
+    <text x="258" y="24" text-anchor="middle" font-family="'Segoe UI', Helvetica, Arial, sans-serif" font-size="12" fill="#8b949e">sudo -E tests/verify.sh</text>
+    <g font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" font-size="13" fill="#8b949e">
+      <text x="22" y="76"><tspan fill="#3fb950">[PASS]</tspan> <tspan fill="#c9d1d9">extension 101 registers with its password</tspan></text>
+      <text x="22" y="102"><tspan fill="#3fb950">[PASS]</tspan> <tspan fill="#c9d1d9">…and is refused with a wrong password</tspan></text>
+      <text x="22" y="128"><tspan fill="#3fb950">[PASS]</tspan> <tspan fill="#c9d1d9">AMI listens on localhost only</tspan></text>
+      <text x="22" y="154"><tspan fill="#3fb950">[PASS]</tspan> <tspan fill="#c9d1d9">fail2ban's filter matches the failed logins</tspan></text>
+      <text x="22" y="180"><tspan fill="#3fb950">[PASS]</tspan> <tspan fill="#c9d1d9">a banned address reaches the packet filter</tspan></text>
+      <text x="22" y="206"><tspan fill="#3fb950">[PASS]</tspan> <tspan fill="#c9d1d9">the host firewall drops by default</tspan></text>
+      <text x="22" y="232"><tspan fill="#3fb950">[PASS]</tspan> <tspan fill="#c9d1d9">sshd refuses passwords</tspan></text>
+      <text x="22" y="258"><tspan fill="#3fb950">[PASS]</tspan> <tspan fill="#c9d1d9">the exporter sees extension 101 as up</tspan></text>
+      <text x="22" y="298" fill="#3fb950">converged twice, nothing changed the second time</text>
+    </g>
+  </g>
+</svg>
