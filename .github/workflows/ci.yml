@@ -23,32 +23,32 @@ jobs:
           terraform_version: "1.9.8"
           terraform_wrapper: false
       - name: Format
-        run: terraform fmt -check -recursive -diff
+        run: ../tests/annotate.sh terraform fmt -check -recursive -diff
       - name: Init
-        run: terraform init -backend=false -input=false
+        run: ../tests/annotate.sh terraform init -backend=false -input=false
       - name: Validate
-        run: terraform validate
+        run: ../tests/annotate.sh terraform validate
       - name: Plan (no credentials, nothing is created)
         env:
           GOOGLE_OAUTH_ACCESS_TOKEN: plan-only-token
         run: |
-          terraform plan -input=false -lock=false -var-file=tests/ci.tfvars -out=tfplan
+          ../tests/annotate.sh terraform plan -input=false -lock=false -var-file=tests/ci.tfvars -out=tfplan
           terraform show -json tfplan > plan.json
       - name: The plan keeps the module's promises
-        run: tests/check_plan.sh plan.json
+        run: ../tests/annotate.sh tests/check_plan.sh plan.json
       - name: Bad inputs are refused with the module's own messages
-        run: tests/negative.sh
+        run: ../tests/annotate.sh tests/negative.sh
       - uses: terraform-linters/setup-tflint@v4
         with:
           tflint_version: v0.54.0
       - name: tflint
         run: |
-          tflint --init
-          tflint
+          ../tests/annotate.sh tflint --init
+          ../tests/annotate.sh tflint
       - name: Checkov (policy as code)
         run: |
           pip install --quiet checkov
-          checkov -d . --framework terraform --quiet --compact --skip-download
+          ../tests/annotate.sh checkov -d . --framework terraform --quiet --compact --skip-download
 
   ansible-lint:
     name: Ansible lint
@@ -118,20 +118,22 @@ jobs:
       # as on a GCE instance: apt, nftables, systemd units, fail2ban.
       - name: Converge (first run)
         working-directory: ansible
-        run: ansible-playbook -i inventory/ci.ini site.yml -e @ci-vars.yml --diff 2>&1 | tee ../converge-1.log
-        shell: bash
+        run: ../tests/annotate.sh ansible-playbook -i inventory/ci.ini site.yml -e @ci-vars.yml --diff
       - name: Verify the host
-        run: sudo -E tests/verify.sh
+        run: sudo -E tests/annotate.sh tests/verify.sh
       - name: Converge again, nothing may change
         working-directory: ansible
         run: |
-          ansible-playbook -i inventory/ci.ini site.yml -e @ci-vars.yml 2>&1 | tee ../converge-2.log
+          ../tests/annotate.sh ansible-playbook -i inventory/ci.ini site.yml -e @ci-vars.yml | tee ../converge-2.log
           grep -E 'changed=0 .*failed=0' ../converge-2.log
-        shell: bash
       - name: Verify again
-        run: sudo -E tests/verify.sh
+        run: sudo -E tests/annotate.sh tests/verify.sh
       - name: Logs on failure
         if: failure()
         run: |
-          sudo journalctl -u asterisk -u asterisk-exporter -u fail2ban -u nftables --no-pager -n 120 || true
-          sudo tail -n 40 /var/log/asterisk/messages.log /var/log/fail2ban.log || true
+          {
+            sudo journalctl -u asterisk -u asterisk-exporter -u fail2ban -u nftables --no-pager -n 40 || true
+            sudo tail -n 15 /var/log/asterisk/messages.log /var/log/fail2ban.log || true
+          } > failure.log 2>&1
+          cat failure.log
+          echo "::error title=service logs::$(tail -n 60 failure.log | tr -d '\r' | sed 's/%/%25/g' | awk '{printf "%s%%0A", $0}' | cut -c1-3800)"
