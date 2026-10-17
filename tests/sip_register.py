@@ -64,16 +64,28 @@ def parse(data):
     return head[0], headers
 
 
+def answer(sock):
+    """Wait for the next SIP *response*. Requests that arrive meanwhile (Asterisk
+    qualifies a new contact with OPTIONS, sometimes before it answers the
+    REGISTER) are answered with 200 OK and skipped."""
+    while True:
+        data, addr = sock.recvfrom(65535)
+        if data.startswith(b"SIP/2.0"):
+            return parse(data)
+        if data.startswith(b"OPTIONS "):
+            answer_options(sock, data, addr)
+
+
 def register(sock, args, server):
     """One REGISTER exchange, answering a digest challenge. Returns the final status line."""
     call_id, tag = f"{rand(16)}@sip_register", rand(8)
     sock.sendto(register_request(args, 1, call_id, tag), server)
-    first, headers = parse(sock.recvfrom(65535)[0])
+    first, headers = answer(sock)
     if " 401 " in first or " 407 " in first:
         challenges = headers.get("www-authenticate", []) + headers.get("proxy-authenticate", [])
         challenge = next((c for c in challenges if "sha" not in c.lower()), challenges[0])
         sock.sendto(register_request(args, 2, call_id, tag, authorization(args, challenge)), server)
-        first, _ = parse(sock.recvfrom(65535)[0])
+        first, _ = answer(sock)
     return first
 
 
