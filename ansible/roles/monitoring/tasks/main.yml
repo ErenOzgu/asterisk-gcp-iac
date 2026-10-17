@@ -3,11 +3,12 @@
   ansible.builtin.assert:
     that:
       - monitoring_exporter_ami_secret | length >= 16
-      - monitoring_exporter_ami_secret is not search('[\s"\\]')
+      - monitoring_exporter_ami_secret is match('^[A-Za-z0-9+/=._-]+$')
       - ansible_facts.architecture in monitoring_exporter_arch_map
     fail_msg: >-
-      monitoring_exporter_ami_secret needs at least 16 characters without spaces,
-      quotes or backslashes, and the CPU architecture must be x86_64 or aarch64.
+      monitoring_exporter_ami_secret needs at least 16 characters from
+      A-Z a-z 0-9 + / = . _ - (`openssl rand -base64 24` produces one), and the
+      CPU architecture must be x86_64 or aarch64.
     quiet: true
   no_log: true
 

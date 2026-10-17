@@ -1,0 +1,144 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1180" height="640" viewBox="0 0 1180 640" role="img" aria-labelledby="t d">
+  <title id="t">Architecture of asterisk-gcp-iac</title>
+  <desc id="d">A SIP trunk, an administrator and Prometheus reach one Compute Engine VM through VPC firewall rules. On the VM, nftables protects Asterisk, fail2ban bans addresses seen in the security log, and two exporters expose metrics.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0L10 5L0 10z" fill="#8b949e"/>
+    </marker>
+    <marker id="arrow-o" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0L10 5L0 10z" fill="#f68d1f"/>
+    </marker>
+    <marker id="arrow-b" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0L10 5L0 10z" fill="#58a6ff"/>
+    </marker>
+    <marker id="arrow-r" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0L10 5L0 10z" fill="#f85149"/>
+    </marker>
+  </defs>
+
+  <rect width="1180" height="640" rx="14" fill="#0d1117"/>
+  <rect x="0.5" y="0.5" width="1179" height="639" rx="14" fill="none" stroke="#ffffff" stroke-opacity="0.12"/>
+
+  <g font-family="'Segoe UI', 'Helvetica Neue', Helvetica, Arial, sans-serif" fill="#d0d7de">
+    <text x="32" y="44" font-size="12" letter-spacing="3" font-weight="600" fill="#f68d1f">ARCHITECTURE</text>
+
+    <!-- ===== outside -->
+    <text x="32" y="86" font-size="12" fill="#8b949e">OUTSIDE</text>
+
+    <g>
+      <rect x="32" y="104" width="190" height="84" rx="10" fill="#161b22" stroke="#ffffff" stroke-opacity="0.14"/>
+      <text x="127" y="140" font-size="15" font-weight="600" text-anchor="middle" fill="#f0f6fc">SIP trunk provider</text>
+      <text x="127" y="162" font-size="12" text-anchor="middle" fill="#8b949e">signalling + media servers</text>
+    </g>
+    <g>
+      <rect x="32" y="270" width="190" height="84" rx="10" fill="#161b22" stroke="#ffffff" stroke-opacity="0.14"/>
+      <text x="127" y="306" font-size="15" font-weight="600" text-anchor="middle" fill="#f0f6fc">Administrator</text>
+      <text x="127" y="328" font-size="12" text-anchor="middle" fill="#8b949e">gcloud + Ansible</text>
+    </g>
+    <g>
+      <rect x="32" y="436" width="190" height="84" rx="10" fill="#161b22" stroke="#ffffff" stroke-opacity="0.14"/>
+      <text x="127" y="472" font-size="15" font-weight="600" text-anchor="middle" fill="#f0f6fc">Prometheus</text>
+      <text x="127" y="494" font-size="12" text-anchor="middle" fill="#8b949e">your monitoring server</text>
+    </g>
+
+    <!-- ===== VPC firewall -->
+    <rect x="270" y="70" width="206" height="500" rx="12" fill="#58a6ff" fill-opacity="0.06" stroke="#58a6ff" stroke-opacity="0.45" stroke-dasharray="6 5"/>
+    <text x="373" y="92" font-size="12" font-weight="600" letter-spacing="1" text-anchor="middle" fill="#58a6ff">VPC FIREWALL</text>
+    <g font-size="12" text-anchor="middle" fill="#c9d1d9">
+      <text x="373" y="132">udp 5060</text>
+      <text x="373" y="150">udp 10000-20000</text>
+      <text x="373" y="170" fill="#8b949e">only from the trunk ranges</text>
+      <text x="373" y="298">tcp 22</text>
+      <text x="373" y="318" fill="#8b949e">only from the IAP range</text>
+      <text x="373" y="334" fill="#8b949e">35.235.240.0/20</text>
+      <text x="373" y="464">tcp 9100, 9650</text>
+      <text x="373" y="484" fill="#8b949e">only from the monitoring</text>
+      <text x="373" y="500" fill="#8b949e">ranges</text>
+      <text x="373" y="548" fill="#f85149">everything else: denied, logged</text>
+    </g>
+
+    <!-- ===== VM -->
+    <rect x="524" y="48" width="624" height="544" rx="12" fill="#161b22" stroke="#ffffff" stroke-opacity="0.16"/>
+    <text x="548" y="76" font-size="14" font-weight="600" fill="#f0f6fc">Compute Engine VM</text>
+    <text x="548" y="95" font-size="12" fill="#8b949e">Ubuntu 22.04 / 24.04 · shielded VM · OS Login · no project roles</text>
+
+    <!-- nftables -->
+    <rect x="548" y="116" width="40" height="440" rx="8" fill="#f68d1f" fill-opacity="0.12" stroke="#f68d1f" stroke-opacity="0.6"/>
+    <text transform="translate(573 336) rotate(-90)" font-size="12" font-weight="600" letter-spacing="1" text-anchor="middle" fill="#f68d1f">nftables · default drop</text>
+
+    <!-- asterisk -->
+    <g>
+      <rect x="628" y="116" width="250" height="150" rx="10" fill="#0d1117" stroke="#ffffff" stroke-opacity="0.18"/>
+      <text x="753" y="146" font-size="16" font-weight="700" text-anchor="middle" fill="#f0f6fc">Asterisk</text>
+      <text x="753" y="172" font-size="12" text-anchor="middle" fill="#c9d1d9">PJSIP on udp 5060</text>
+      <text x="753" y="192" font-size="12" text-anchor="middle" fill="#c9d1d9">strict RTP, chan_sip not loaded</text>
+      <text x="753" y="212" font-size="12" text-anchor="middle" fill="#c9d1d9">AMI on 127.0.0.1:5038</text>
+      <text x="753" y="244" font-size="12" text-anchor="middle" fill="#8b949e">extensions from Ansible vars</text>
+    </g>
+
+    <!-- security log -->
+    <g>
+      <rect x="628" y="330" width="250" height="64" rx="10" fill="#0d1117" stroke="#ffffff" stroke-opacity="0.18"/>
+      <text x="753" y="358" font-size="13" font-weight="600" text-anchor="middle" fill="#f0f6fc">security_log</text>
+      <text x="753" y="378" font-size="12" text-anchor="middle" fill="#8b949e">failed logins, unknown callers</text>
+    </g>
+
+    <!-- fail2ban -->
+    <g>
+      <rect x="920" y="330" width="204" height="64" rx="10" fill="#0d1117" stroke="#f85149" stroke-opacity="0.6"/>
+      <text x="1022" y="358" font-size="15" font-weight="700" text-anchor="middle" fill="#f0f6fc">fail2ban</text>
+      <text x="1022" y="378" font-size="12" text-anchor="middle" fill="#8b949e">bans through nftables</text>
+    </g>
+
+    <!-- exporters -->
+    <g>
+      <rect x="628" y="440" width="250" height="112" rx="10" fill="#0d1117" stroke="#ffffff" stroke-opacity="0.18"/>
+      <text x="753" y="470" font-size="13" font-weight="600" text-anchor="middle" fill="#f0f6fc">asterisk-exporter · :9650</text>
+      <text x="753" y="490" font-size="12" text-anchor="middle" fill="#8b949e">reads AMI with a read-only user</text>
+      <text x="753" y="522" font-size="13" font-weight="600" text-anchor="middle" fill="#f0f6fc">node_exporter · :9100</text>
+      <text x="753" y="542" font-size="12" text-anchor="middle" fill="#8b949e">CPU, memory, disk, network</text>
+    </g>
+
+    <!-- sshd -->
+    <g>
+      <rect x="920" y="270" width="204" height="40" rx="10" fill="#0d1117" stroke="#ffffff" stroke-opacity="0.18"/>
+      <text x="1022" y="295" font-size="13" font-weight="600" text-anchor="middle" fill="#f0f6fc">sshd · keys only</text>
+    </g>
+
+    <!-- disk -->
+    <g>
+      <rect x="920" y="440" width="204" height="112" rx="10" fill="#0d1117" stroke="#ffffff" stroke-opacity="0.18"/>
+      <text x="1022" y="474" font-size="13" font-weight="600" text-anchor="middle" fill="#f0f6fc">Boot disk</text>
+      <text x="1022" y="496" font-size="12" text-anchor="middle" fill="#8b949e">daily snapshot</text>
+      <text x="1022" y="514" font-size="12" text-anchor="middle" fill="#8b949e">kept for 7 days</text>
+      <text x="1022" y="536" font-size="12" text-anchor="middle" fill="#8b949e">Google-managed encryption</text>
+    </g>
+  </g>
+
+  <!-- ===== arrows -->
+  <g fill="none" stroke-width="1.6">
+    <!-- trunk -> asterisk -->
+    <path d="M222 146H270" stroke="#8b949e" marker-end="url(#arrow)"/>
+    <path d="M476 146H548" stroke="#8b949e" marker-end="url(#arrow)"/>
+    <path d="M588 146H628" stroke="#f68d1f" marker-end="url(#arrow-o)"/>
+    <!-- admin -> sshd -->
+    <path d="M222 312H270" stroke="#8b949e" marker-end="url(#arrow)"/>
+    <path d="M476 312H548" stroke="#8b949e" marker-end="url(#arrow)"/>
+    <path d="M588 290H920" stroke="#f68d1f" marker-end="url(#arrow-o)"/>
+    <!-- prometheus -> exporters -->
+    <path d="M222 478H270" stroke="#8b949e" marker-end="url(#arrow)"/>
+    <path d="M476 478H548" stroke="#8b949e" marker-end="url(#arrow)"/>
+    <path d="M588 496H628" stroke="#f68d1f" marker-end="url(#arrow-o)"/>
+    <!-- asterisk -> security log -->
+    <path d="M753 266V330" stroke="#58a6ff" marker-end="url(#arrow-b)"/>
+    <!-- security log -> fail2ban -->
+    <path d="M878 362H920" stroke="#58a6ff" marker-end="url(#arrow-b)"/>
+    <!-- fail2ban -> nftables (ban) -->
+    <path d="M1022 394V418H588" stroke="#f85149" marker-end="url(#arrow-r)" stroke-dasharray="5 4"/>
+    <!-- exporter -> AMI -->
+    <path d="M878 470H900V196H878" stroke="#58a6ff" marker-end="url(#arrow-b)" stroke-dasharray="5 4"/>
+  </g>
+  <g font-family="'Segoe UI', 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="11" fill="#8b949e">
+    <text x="1034" y="411" text-anchor="start" fill="#f85149" font-size="11">ban</text>
+  </g>
+</svg>

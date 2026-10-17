@@ -184,13 +184,18 @@ resource "google_compute_resource_policy" "snapshots" {
 
 resource "google_compute_disk" "boot" {
   #checkov:skip=CKV_GCP_37:Google-managed encryption at rest is on by default. Customer-supplied keys would have to be typed in at every start and put the PBX's availability in the hands of the key custodian.
-  name              = "${var.name}-boot"
-  zone              = var.zone
-  type              = "pd-balanced"
-  size              = var.boot_disk_size_gb
-  image             = var.image
-  labels            = local.labels
-  resource_policies = [google_compute_resource_policy.snapshots.self_link]
+  name   = "${var.name}-boot"
+  zone   = var.zone
+  type   = "pd-balanced"
+  size   = var.boot_disk_size_gb
+  image  = var.image
+  labels = local.labels
+}
+
+resource "google_compute_disk_resource_policy_attachment" "boot_snapshots" {
+  name = google_compute_resource_policy.snapshots.name
+  disk = google_compute_disk.boot.name
+  zone = var.zone
 }
 
 resource "google_compute_instance" "pbx" {

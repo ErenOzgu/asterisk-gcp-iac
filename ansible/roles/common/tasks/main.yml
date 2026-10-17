@@ -22,6 +22,17 @@
     path: /usr/sbin/sshd
   register: common_sshd
 
+# sshd -t refuses to run without it, and on a host where sshd is socket-activated
+# and idle nobody has created it yet.
+- name: Make sure sshd's privilege separation directory exists for the syntax check
+  ansible.builtin.file:
+    path: /run/sshd
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+  when: common_ssh_hardening and common_sshd.stat.exists
+
 - name: Harden the SSH server
   ansible.builtin.template:
     src: sshd-hardening.conf.j2

@@ -4,10 +4,11 @@
     that:
       - item.name is match('^[0-9A-Za-z_-]+$')
       - item.password | length >= 16
-      - item.password is not search('[\s"\\]')
+      - item.password is match('^[A-Za-z0-9+/=._-]+$')
     fail_msg: >-
-      Endpoint "{{ item.name }}": the name may only contain letters, digits, - and _,
-      and the password needs at least 16 characters without spaces, quotes or backslashes.
+      Endpoint "{{ item.name }}": the name may only contain letters, digits, - and _.
+      The password needs at least 16 characters from A-Z a-z 0-9 + / = . _ -
+      (`openssl rand -base64 24` produces one).
     quiet: true
   loop: "{{ asterisk_endpoints }}"
   loop_control:

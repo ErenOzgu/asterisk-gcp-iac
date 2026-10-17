@@ -16,6 +16,8 @@ jobs:
     defaults:
       run:
         working-directory: terraform
+    env:
+      TF_CLI_ARGS: -no-color
     steps:
       - uses: actions/checkout@v4
       - uses: hashicorp/setup-terraform@v3
