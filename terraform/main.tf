@@ -47,6 +47,7 @@ resource "google_compute_address" "pbx" {
 
 resource "google_compute_firewall" "sip" {
   name          = "${var.name}-allow-sip"
+  description   = "SIP signalling (udp/5060) from the listed provider and office ranges only."
   network       = google_compute_network.vpc.name
   direction     = "INGRESS"
   priority      = 1000
@@ -72,6 +73,7 @@ resource "google_compute_firewall" "sip" {
 
 resource "google_compute_firewall" "rtp" {
   name          = "${var.name}-allow-rtp"
+  description   = "RTP media (udp/10000-20000) from the listed media ranges only."
   network       = google_compute_network.vpc.name
   direction     = "INGRESS"
   priority      = 1000
@@ -97,6 +99,7 @@ resource "google_compute_firewall" "rtp" {
 
 resource "google_compute_firewall" "ssh" {
   name          = "${var.name}-allow-ssh"
+  description   = "SSH from the IAP range only. Logins are OS Login, not key files."
   network       = google_compute_network.vpc.name
   direction     = "INGRESS"
   priority      = 1000
@@ -124,6 +127,7 @@ resource "google_compute_firewall" "monitoring" {
   count = length(var.monitoring_source_ranges) > 0 ? 1 : 0
 
   name          = "${var.name}-allow-metrics"
+  description   = "Prometheus scrape ports (node_exporter 9100, asterisk-exporter 9650) from the monitoring ranges only."
   network       = google_compute_network.vpc.name
   direction     = "INGRESS"
   priority      = 1000
@@ -143,6 +147,7 @@ resource "google_compute_firewall" "monitoring" {
 # The implied deny rule does not log. This explicit one does.
 resource "google_compute_firewall" "deny_all_ingress" {
   name          = "${var.name}-deny-all-ingress"
+  description   = "Explicit deny-all that logs, because the implied deny rule does not."
   network       = google_compute_network.vpc.name
   direction     = "INGRESS"
   priority      = 65000

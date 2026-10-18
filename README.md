@@ -23,7 +23,7 @@ It is meant as a sound starting point, not a turnkey call centre. The interestin
 | Layer | What it does |
 |---|---|
 | **VPC and firewall** | A custom network with its own subnet (flow logs on). Every rule is scoped to the PBX's network tag and logs. SIP `udp/5060` and RTP `udp/10000-20000` are open only to ranges you list, SSH only to Google's IAP range, metrics only to your Prometheus. A logging deny-all rule closes the rest. |
-| **VM** | Shielded VM (secure boot, vTPM, integrity monitoring), OS Login, project-wide SSH keys blocked, serial console off, no IP forwarding, deletion protection on. Boot disk snapshotted daily, kept for a week. |
+| **VM** | Shielded VM (secure boot, vTPM, integrity monitoring), OS Login, project-wide SSH keys blocked, serial console off, no IP forwarding, deletion protection on. Boot disk snapshotted daily, kept for a week; the disk and its snapshots outlive the VM. |
 | **Identity** | The VM runs as its own service account **with no roles at all**, so nothing on it can call a Google API. Admins get OS Login, an IAP tunnel and the right to act as that account, as IAM grants. |
 | **Host firewall** | `nftables`, default drop, the same source lists as the VPC rules. A second layer: a mistake in one is not an open port. |
 | **Asterisk** | PJSIP only (legacy `chan_sip`, IAX, Skinny, MGCP and UniStim are not loaded), strict RTP, AMI on `127.0.0.1`, the security log switched on, extensions generated from variables. |
@@ -83,7 +83,7 @@ Everything below runs on every push.
 
 | Job | What it proves |
 |---|---|
-| **Terraform** | `fmt`, `validate`, then a real `terraform plan` without credentials, which creates nothing. The plan is turned into JSON and checked against **17 promises** ([`check_plan.sh`](terraform/tests/check_plan.sh)): no allow rule open to the world, SSH from the IAP range only, shielded VM, OS Login, no project roles for the service account, snapshots, and so on. **Nine bad or borderline inputs** ([`negative.sh`](terraform/tests/negative.sh)): seven must be refused with the module's own messages, two acknowledged or harmless ones must still be accepted. Then `tflint` and Checkov. |
+| **Terraform** | `fmt`, `validate`, then a real `terraform plan` without credentials, which creates nothing. The plan is turned into JSON and checked against **19 promises** ([`check_plan.sh`](terraform/tests/check_plan.sh)): every firewall rule says why it exists, no allow rule open to the world, SSH from the IAP range only, shielded VM, OS Login, no project roles for the service account, snapshots that outlive the VM, and so on. **Nine bad or borderline inputs** ([`negative.sh`](terraform/tests/negative.sh)): seven must be refused with the module's own messages, two acknowledged or harmless ones must still be accepted. Then `tflint` and Checkov. |
 | **Ansible lint** | `ansible-lint` on the *production* profile, `yamllint`, `shellcheck`, a syntax check. |
 | **Converge** on Ubuntu 22.04 and 24.04 | The playbook runs against a real Ubuntu VM with systemd (the GitHub runner): real `apt`, real units, real `nftables` and fail2ban. Then [`verify.sh`](tests/verify.sh) checks the result, **and the playbook runs a second time and must report `changed=0`**. |
 
@@ -119,6 +119,11 @@ tests/verify.sh            end-to-end checks on a converged host
 - **No trunk configuration.** The dialplan covers extensions and an echo test. Trunks depend on your provider, so the roles stop at `[internal]`.
 - **Local Terraform state.** Add a `backend "gcs"` block for a team.
 - **Debian-family only.** The roles use `apt`, `nftables` and systemd; they are written and tested for Ubuntu 22.04 and 24.04.
+
+## More
+
+[Design notes](docs/design-notes.md) (why it is built this way, what the tests can and cannot prove),
+[CHANGELOG](CHANGELOG.md) and [ROADMAP](ROADMAP.md).
 
 ## License
 

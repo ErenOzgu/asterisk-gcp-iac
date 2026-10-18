@@ -23,6 +23,8 @@ instance='.resource_changes[] | select(.type == "google_compute_instance") | .ch
 
 check "the plan only creates resources" \
   '[.resource_changes[] | select(.change.actions != ["create"])] | length == 0'
+check "every firewall rule says why it exists" \
+  "$rules | map(select((.description // \"\") == \"\")) | length == 0"
 check "no rule that allows traffic is open to 0.0.0.0/0" \
   "$rules | map(select((.allow // []) | length > 0) | select((.source_ranges // []) | index(\"0.0.0.0/0\"))) | length == 0"
 check "every allow rule is scoped to the PBX's network tag" \
@@ -56,6 +58,9 @@ check "the VM has a dedicated service account that gets no project roles" \
      and ([$p.resource_changes[] | select(.type == "google_project_iam_member" or .type == "google_project_iam_binding")] | length == 0)'
 check "the boot disk is snapshotted daily and kept for a week" \
   '.resource_changes[] | select(.type == "google_compute_resource_policy") | .change.after.snapshot_schedule_policy[0] | .schedule[0].daily_schedule[0].days_in_cycle == 1 and .retention_policy[0].max_retention_days == 7'
+check "deleting the VM keeps the boot disk, and deleting the disk keeps its snapshots" \
+  '([.resource_changes[] | select(.type == "google_compute_instance") | .change.after.boot_disk[0].auto_delete] == [false])
+   and ([.resource_changes[] | select(.type == "google_compute_resource_policy") | .change.after.snapshot_schedule_policy[0].retention_policy[0].on_source_disk_delete] == ["KEEP_AUTO_SNAPSHOTS"])'
 check "each admin gets OS Login, an IAP tunnel and the right to act as the VM account" \
   '[.resource_changes[] | select(.type == "google_compute_instance_iam_member" or .type == "google_iap_tunnel_instance_iam_member" or .type == "google_service_account_iam_member")] | length == 3'
 
