@@ -14,6 +14,8 @@ Format: [Keep a Changelog](https://keepachangelog.com/), versions follow [SemVer
 - `ROADMAP.md`: the next small steps, in order.
 
 ### Changed
+- `negative.sh`: the case with empty `monitoring_source_ranges` no longer only checks that the plan is accepted; it
+  also checks that the plan has no `-allow-metrics` rule (and still has the SIP rule, so an empty plan cannot pass).
 - The plan check goes from 17 to 19 promises.
 
 ## Before this file

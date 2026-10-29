@@ -4,7 +4,7 @@ Small steps, in order. A step is done when CI is green, the README says what cha
 it. Steps that add behaviour also get a check in `check_plan.sh`, `negative.sh` or `verify.sh`. Each step is meant to
 be a few hours of work.
 
-- [ ] `negative.sh`: when `monitoring_source_ranges` is empty, check the plan has **no** `-allow-metrics` rule (today
+- [x] `negative.sh`: when `monitoring_source_ranges` is empty, check the plan has **no** `-allow-metrics` rule (today
       the case only checks that the plan is accepted)
 - [ ] `terraform/backend.tf.example` with a `gcs` backend block, and a line in the README on creating the bucket
 - [ ] TLS transport for PJSIP: a certificate path variable, a `transport-tls` section behind a switch, and a `verify.sh`
