@@ -30,6 +30,14 @@ jobs:
         run: ../tests/annotate.sh terraform init -backend=false -input=false
       - name: Validate
         run: ../tests/annotate.sh terraform validate
+      - name: The backend example is valid once copied
+        run: |
+          d="$(mktemp -d)"
+          cp -r . "$d"
+          cd "$d"
+          cp backend.tf.example backend.tf
+          terraform init -backend=false -input=false
+          terraform validate
       - name: Plan (no credentials, nothing is created)
         env:
           GOOGLE_OAUTH_ACCESS_TOKEN: plan-only-token

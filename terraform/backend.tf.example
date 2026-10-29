@@ -1,0 +1,20 @@
+# Remote state in a Cloud Storage bucket. Optional: without this file the state stays local.
+#
+# 1. Create the bucket once, outside this module (names are global, pick your own):
+#
+#      gcloud storage buckets create gs://YOUR-STATE-BUCKET --project=YOUR-PROJECT \
+#        --location=europe-west1 --uniform-bucket-level-access
+#      gcloud storage buckets update gs://YOUR-STATE-BUCKET --versioning
+#
+# 2. Copy this file, fill in the bucket name and run `terraform init -migrate-state`:
+#
+#      cp backend.tf.example backend.tf
+#
+# backend.tf is not committed with real names by default; commit it if your team shares the bucket.
+# The gcs backend locks the state itself, so no extra locking table is needed.
+terraform {
+  backend "gcs" {
+    bucket = "YOUR-STATE-BUCKET"
+    prefix = "asterisk-gcp-iac"
+  }
+}

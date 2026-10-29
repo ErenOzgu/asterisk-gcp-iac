@@ -11,6 +11,8 @@ Format: [Keep a Changelog](https://keepachangelog.com/), versions follow [SemVer
   Someone reading the cloud console sees the intent next to the rule, not only the name.
 - `docs/design-notes.md`: why the module is built the way it is, what the tests can and cannot prove, and the
   questions this design usually draws.
+- `terraform/backend.tf.example`: a `gcs` backend block with the commands to create the bucket. CI copies it to
+  `backend.tf` in a scratch directory and runs `terraform validate`, so the example cannot rot.
 - `ROADMAP.md`: the next small steps, in order.
 
 ### Changed

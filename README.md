@@ -117,7 +117,7 @@ tests/verify.sh            end-to-end checks on a converged host
 - **One VM.** No high availability and no failover address. A snapshot restores the disk; it does not keep calls up.
 - **SIP over UDP, no TLS.** Extensions authenticate with digest passwords over UDP, as most trunks do. Adding a TLS transport and certificates is the obvious next step.
 - **No trunk configuration.** The dialplan covers extensions and an echo test. Trunks depend on your provider, so the roles stop at `[internal]`.
-- **Local Terraform state.** Add a `backend "gcs"` block for a team.
+- **Local Terraform state.** For a team, copy [`terraform/backend.tf.example`](terraform/backend.tf.example) to `backend.tf`; it explains how to create the bucket first. CI checks that the example is valid once copied.
 - **Debian-family only.** The roles use `apt`, `nftables` and systemd; they are written and tested for Ubuntu 22.04 and 24.04.
 
 ## More

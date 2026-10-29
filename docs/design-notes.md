@@ -53,8 +53,8 @@ Login instead. This is written down in the README because it looks like an overs
 
 ### Local state
 
-Terraform state is local. It is a one-VM example and a backend needs a bucket that has to exist first. The README
-says so under Limits, with the line to add.
+Terraform state is local. It is a one-VM example and a backend needs a bucket that has to exist first. `terraform/backend.tf.example`
+holds the `gcs` block and the commands to create the bucket; the README points to it under Limits.
 
 ## How it was checked
 
