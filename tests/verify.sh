@@ -49,6 +49,15 @@ listeners="$(ss -ltnH 2>/dev/null)"
 check "AMI listens on localhost only" bash -c "grep -q '127.0.0.1:5038' <<<'$listeners' && [ \"\$(grep -c ':5038' <<<'$listeners')\" = 1 ]"
 check "pjsip.conf is readable by asterisk only" bash -c "[ \"\$(stat -c '%a %U %G' /etc/asterisk/pjsip.conf)\" = '640 root asterisk' ]"
 
+# SIP over TLS is optional: these checks run only when the host was converged with it.
+if contains 'transport-tls' "$(ast 'pjsip show transports')"; then
+  echo "# TLS"
+  tls_out="$(openssl s_client -connect 127.0.0.1:5061 -tls1_2 </dev/null 2>&1)"
+  check "the TLS transport completes a TLS 1.2 handshake" contains 'Protocol *: TLSv1.2' "$tls_out"
+  check "the TLS transport presents a certificate" contains 'BEGIN CERTIFICATE' "$tls_out"
+  check "the host firewall opens tcp/5061 to the SIP sources" contains 'tcp dport 5061' "$(nft list table inet asterisk_fw 2>&1)"
+fi
+
 echo "# fail2ban"
 for _ in $(seq 1 20); do fail2ban-client status asterisk >/dev/null 2>&1 && break; sleep 1; done # jails load a few seconds after a restart
 check "the security log records the failed logins" grep -q 'ChallengeResponseFailed\|InvalidAccountID' /var/log/asterisk/security_log

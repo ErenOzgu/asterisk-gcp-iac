@@ -15,6 +15,28 @@
     label: "{{ item.name }}"
   no_log: true
 
+- name: Check the TLS settings
+  when: asterisk_tls_enabled
+  block:
+    - name: Look for the certificate and the key
+      ansible.builtin.stat:
+        path: "{{ item }}"
+      register: asterisk_tls_files
+      loop:
+        - "{{ asterisk_tls_cert_file }}"
+        - "{{ asterisk_tls_key_file }}"
+
+    - name: Refuse TLS without a certificate and a key on the VM
+      ansible.builtin.assert:
+        that:
+          - asterisk_tls_cert_file | length > 0
+          - asterisk_tls_key_file | length > 0
+          - asterisk_tls_files.results | map(attribute='stat.exists') | min
+        fail_msg: >-
+          asterisk_tls_enabled needs asterisk_tls_cert_file and asterisk_tls_key_file to be
+          absolute paths of files that already exist on the VM.
+        quiet: true
+
 - name: Install Asterisk
   ansible.builtin.apt:
     name: asterisk

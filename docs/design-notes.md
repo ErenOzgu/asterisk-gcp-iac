@@ -59,10 +59,10 @@ holds the `gcs` block and the commands to create the bucket; the README points t
 ## How it was checked
 
 * `terraform plan` without credentials (a made-up access token and throwaway values in `tests/ci.tfvars`), turned into
-  JSON and checked against 19 promises in `tests/check_plan.sh`. Each promise is a short `jq` filter, so a reviewer can
+  JSON and checked against 20 promises in `tests/check_plan.sh`. Each promise is a short `jq` filter, so a reviewer can
   read what is promised in one screen.
-* Nine inputs in `tests/negative.sh`: seven must be refused **with the module's own message**, two (an acknowledged
-  open SIP range, no monitoring ranges) must still be accepted. Checking the message matters: a plan that fails for an
+* Eleven inputs in `tests/negative.sh`: eight must be refused **with the module's own message**, three (an acknowledged
+  open SIP range, no monitoring ranges, TLS switched on) must still be accepted. Checking the message matters: a plan that fails for an
   unrelated reason would otherwise count as a pass.
 * The Ansible playbook is run for real on Ubuntu 22.04 and 24.04 runners, then `tests/verify.sh` registers an
   extension with a digest login, sends a wrong password and an unknown extension, and checks that the refusals reach
@@ -82,8 +82,8 @@ A plan policy test also cannot see what the cloud adds on its own: it checks the
 
 ## What would be changed next
 
-See [ROADMAP.md](../ROADMAP.md). The first item for a real deployment would be a remote state backend; the first item for
-a real PBX is TLS for SIP.
+See [ROADMAP.md](../ROADMAP.md). The first item for a real deployment would be a remote state backend; TLS for SIP
+now exists as an opt-in switch; trunks are next.
 
 ## Questions this design usually draws
 
@@ -115,7 +115,7 @@ cd terraform
 terraform init -backend=false
 GOOGLE_OAUTH_ACCESS_TOKEN=plan-only-token terraform plan -var-file=tests/ci.tfvars -out=tfplan
 terraform show -json tfplan > plan.json
-tests/check_plan.sh plan.json     # 19 promises about the plan
+tests/check_plan.sh plan.json     # 20 promises about the plan
 tests/negative.sh                 # inputs that must be refused, with the module's own message
 ```
 

@@ -36,6 +36,9 @@ table inet asterisk_fw {
 
     ip saddr @ssh_sources tcp dport 22 accept
     ip saddr @sip_sources udp dport {{ pbx_sip_port }} accept
+{% if asterisk_tls_enabled | default(false) %}
+    ip saddr @sip_sources tcp dport {{ pbx_sip_tls_port }} accept
+{% endif %}
     ip saddr @rtp_sources udp dport {{ pbx_rtp_start }}-{{ pbx_rtp_end }} accept
     ip saddr @monitoring_sources tcp dport { {{ pbx_node_exporter_port }}, {{ pbx_exporter_port }} } accept
   }

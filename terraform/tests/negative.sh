@@ -62,6 +62,28 @@ expect_accepted_without_rule() { # expect_accepted_without_rule "description" "r
   rm -f "$tfplan"
 }
 
+expect_with_rule() { # expect_with_rule "description" "rule name suffix" "protocol/port" [plan arguments]
+  local desc="$1" suffix="$2" want="$3" out tfplan
+  shift 3
+  tfplan="$(mktemp)"
+  if ! out="$(plan -out="$tfplan" "$@")"; then
+    echo "[FAIL] $desc"
+    echo "$out" | tail -15
+    failed=1
+  elif "$tf" show -json "$tfplan" | jq -e --arg s "$suffix" --arg want "$want" '
+      [.resource_changes[] | select(.type == "google_compute_firewall") | .change.after
+        | select(.name | endswith($s))] as $r
+      | ($r | length == 1)
+        and ($r[0].allow | map(.protocol + "/" + (.ports | join(","))) == [$want])
+        and ($r[0].source_ranges | sort) == ["198.51.100.0/24", "203.0.113.10/32"]' >/dev/null; then
+    echo "[PASS] $desc"
+  else
+    echo "[FAIL] $desc: the plan has no single $suffix rule for $want from the SIP ranges"
+    failed=1
+  fi
+  rm -f "$tfplan"
+}
+
 expect_refused "SIP open to the internet" "exposes SIP to the whole internet" -var 'sip_source_ranges=["0.0.0.0/0"]'
 expect_accepted "SIP open to the internet when acknowledged" -var 'sip_source_ranges=["0.0.0.0/0"]' -var allow_open_sip=true
 expect_refused "RTP open to the internet" "exposes the media ports to the whole internet" -var 'rtp_source_ranges=["0.0.0.0/0"]'
@@ -71,5 +93,7 @@ expect_refused "a malformed CIDR range" "sip_source_ranges needs at least one va
 expect_refused "an admin without a member prefix" "must start with user:, group: or serviceAccount:" -var 'admin_members=["admin@example.com"]'
 expect_refused "a bad project ID" "valid GCP project ID" -var 'project_id=My_Project'
 expect_accepted_without_rule "the monitoring rule disappears when no ranges are given" "-allow-metrics" -var 'monitoring_source_ranges=[]'
+expect_with_rule "SIP over TLS opens tcp/5061 to the SIP ranges when asked" "-allow-sip-tls" "tcp/5061" -var sip_tls_enabled=true
+expect_refused "SIP over TLS open to the internet" "exposes SIP over TLS to the whole internet" -var sip_tls_enabled=true -var 'sip_source_ranges=["0.0.0.0/0"]'
 
 exit "$failed"

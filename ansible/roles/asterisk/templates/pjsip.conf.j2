@@ -13,6 +13,21 @@ external_signaling_address = {{ asterisk_external_ip }}
 external_media_address = {{ asterisk_external_ip }}
 local_net = {{ asterisk_local_net }}
 {% endif %}
+{% if asterisk_tls_enabled %}
+
+[transport-tls]
+type = transport
+protocol = tls
+bind = 0.0.0.0:{{ pbx_sip_tls_port }}
+cert_file = {{ asterisk_tls_cert_file }}
+priv_key_file = {{ asterisk_tls_key_file }}
+method = tlsv1_2
+{% if asterisk_external_ip | length > 0 and asterisk_local_net | length > 0 %}
+external_signaling_address = {{ asterisk_external_ip }}
+external_media_address = {{ asterisk_external_ip }}
+local_net = {{ asterisk_local_net }}
+{% endif %}
+{% endif %}
 {% for endpoint in asterisk_endpoints %}
 
 ; ---- extension {{ endpoint.name }}

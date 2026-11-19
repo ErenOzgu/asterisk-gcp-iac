@@ -22,3 +22,10 @@ asterisk_disabled_modules:
   - chan_unistim.so
 
 asterisk_security_log_retention_weeks: 8
+
+# SIP over TLS (tcp/5061), off by default. Turn it on with a certificate and key that
+# already exist on the VM; this role does not issue or renew them. The key must be
+# readable by group asterisk. TLS 1.2 is the minimum.
+asterisk_tls_enabled: false
+asterisk_tls_cert_file: ""
+asterisk_tls_key_file: ""

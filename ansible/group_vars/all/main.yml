@@ -1,6 +1,7 @@
 ---
 # Ports that more than one role needs to agree on.
 pbx_sip_port: 5060
+pbx_sip_tls_port: 5061
 pbx_rtp_start: 10000
 pbx_rtp_end: 20000
 pbx_exporter_port: 9650

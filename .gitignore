@@ -9,3 +9,4 @@ ansible/group_vars/asterisk/vault.yml
 crash.log
 .vault-pass
 !terraform/tests/ci.tfvars
+__pycache__/

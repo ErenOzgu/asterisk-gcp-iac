@@ -33,6 +33,8 @@ check "every firewall rule logs" \
   "$rules | map(select(.log_config == null or (.log_config | length) == 0)) | length == 0"
 check "SSH is reachable from the IAP range only" \
   "$rules | map(select((.allow // []) | map(.ports // []) | flatten | index(\"22\"))) | map(.source_ranges) == [[\"35.235.240.0/20\"]]"
+check "SIP over TLS stays closed unless asked for" \
+  "$rules | map(select(.name | endswith(\"-allow-sip-tls\"))) | length == 0"
 check "SIP is a single UDP port" \
   "$rules | map(select(.name | endswith(\"-allow-sip\"))) | .[0].allow == [{\"ports\": [\"5060\"], \"protocol\": \"udp\"}]"
 check "the metrics ports are only open to the monitoring ranges" \

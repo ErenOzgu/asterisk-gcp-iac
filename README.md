@@ -70,10 +70,12 @@ To tear everything down: `terraform apply -var deletion_protection=false`, then 
 |---|---|---|
 | `terraform.tfvars` | `sip_source_ranges` | **Required.** Who may reach SIP: your trunk provider's addresses and your own. No default; `0.0.0.0/0` is refused unless `allow_open_sip = true`. |
 | | `rtp_source_ranges` | Media sources, if they differ from the SIP ones. |
+| | `sip_tls_enabled` | Also open `tcp/5061` to the SIP ranges. Default `false`. |
 | | `monitoring_source_ranges` | Your Prometheus. Empty keeps the metrics ports closed. |
 | | `admin_members` | Who may SSH in (`user:you@example.com`). |
 | | `machine_type`, `region`, `zone` | Defaults: `e2-small` in `europe-west3`. |
 | `group_vars/asterisk/main.yml` | `firewall_sip_sources` | Same list as above, for the host firewall. |
+| | `asterisk_tls_enabled`, `asterisk_tls_cert_file`, `asterisk_tls_key_file` | SIP over TLS. Off by default; the certificate and key must already be on the VM. |
 | | `asterisk_endpoints` | Extensions: name, password (from the vault) and an optional caller ID. |
 | | `monitoring_exporter_version` | Release of asterisk-exporter to install. |
 
@@ -83,7 +85,7 @@ Everything below runs on every push.
 
 | Job | What it proves |
 |---|---|
-| **Terraform** | `fmt`, `validate`, then a real `terraform plan` without credentials, which creates nothing. The plan is turned into JSON and checked against **19 promises** ([`check_plan.sh`](terraform/tests/check_plan.sh)): every firewall rule says why it exists, no allow rule open to the world, SSH from the IAP range only, shielded VM, OS Login, no project roles for the service account, snapshots that outlive the VM, and so on. **Nine bad or borderline inputs** ([`negative.sh`](terraform/tests/negative.sh)): seven must be refused with the module's own messages, two acknowledged or harmless ones must still be accepted. Then `tflint` and Checkov. |
+| **Terraform** | `fmt`, `validate`, then a real `terraform plan` without credentials, which creates nothing. The plan is turned into JSON and checked against **20 promises** ([`check_plan.sh`](terraform/tests/check_plan.sh)): every firewall rule says why it exists, no allow rule open to the world, SSH from the IAP range only, shielded VM, OS Login, no project roles for the service account, snapshots that outlive the VM, and so on. **Eleven bad or borderline inputs** ([`negative.sh`](terraform/tests/negative.sh)): eight must be refused with the module's own messages, three acknowledged or harmless ones must still be accepted (one of them checks that the TLS rule appears with the right port and ranges). Then `tflint` and Checkov. |
 | **Ansible lint** | `ansible-lint` on the *production* profile, `yamllint`, `shellcheck`, a syntax check. |
 | **Converge** on Ubuntu 22.04 and 24.04 | The playbook runs against a real Ubuntu VM with systemd (the GitHub runner): real `apt`, real units, real `nftables` and fail2ban. Then [`verify.sh`](tests/verify.sh) checks the result, **and the playbook runs a second time and must report `changed=0`**. |
 
@@ -115,7 +117,7 @@ tests/verify.sh            end-to-end checks on a converged host
 ## Limits
 
 - **One VM.** No high availability and no failover address. A snapshot restores the disk; it does not keep calls up.
-- **SIP over UDP, no TLS.** Extensions authenticate with digest passwords over UDP, as most trunks do. Adding a TLS transport and certificates is the obvious next step.
+- **SIP over UDP by default; TLS is opt-in and you bring the certificate.** Extensions authenticate with digest passwords over UDP, as most trunks do. Set `sip_tls_enabled = true` in Terraform and `asterisk_tls_enabled: true` with `asterisk_tls_cert_file` / `asterisk_tls_key_file` in Ansible to add a `transport-tls` on `tcp/5061` (TLS 1.2 minimum, same source ranges as SIP). The files must already exist on the VM, and the key must be readable by group `asterisk`; nothing here issues or renews certificates, and the client certificate is not verified.
 - **No trunk configuration.** The dialplan covers extensions and an echo test. Trunks depend on your provider, so the roles stop at `[internal]`.
 - **Local Terraform state.** For a team, copy [`terraform/backend.tf.example`](terraform/backend.tf.example) to `backend.tf`; it explains how to create the bucket first. CI checks that the example is valid once copied.
 - **Debian-family only.** The roles use `apt`, `nftables` and systemd; they are written and tested for Ubuntu 22.04 and 24.04.

@@ -80,6 +80,12 @@ variable "sip_source_ranges" {
   }
 }
 
+variable "sip_tls_enabled" {
+  description = "Also open SIP over TLS (tcp/5061) to sip_source_ranges. Turn it on together with asterisk_tls_enabled in the Ansible variables; the port is closed by default."
+  type        = bool
+  default     = false
+}
+
 variable "rtp_source_ranges" {
   description = "Who may send RTP media (udp/10000-20000). Empty means the same ranges as SIP, which is right for most trunks; set it when your provider's media servers live elsewhere."
   type        = list(string)

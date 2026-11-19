@@ -112,6 +112,12 @@ jobs:
             echo "EP102_PASSWORD=$(openssl rand -hex 16)"
             echo "AMI_SECRET=$(openssl rand -hex 16)"
           } >> "$GITHUB_ENV"
+      - name: A throwaway certificate for the TLS transport
+        run: |
+          sudo install -d -m 0755 /etc/pbx-ci
+          sudo openssl req -x509 -newkey rsa:2048 -nodes -days 1 -subj "/CN=pbx.example.test" \
+            -keyout /etc/pbx-ci/key.pem -out /etc/pbx-ci/cert.pem
+          sudo chmod 0644 /etc/pbx-ci/key.pem /etc/pbx-ci/cert.pem
       - name: Variables for this run
         run: |
           cat > ansible/ci-vars.yml <<VARS
@@ -122,6 +128,9 @@ jobs:
           firewall_monitoring_sources: ["10.20.0.5/32"]
           asterisk_external_ip: "203.0.113.50"
           asterisk_local_net: "10.0.0.0/8"
+          asterisk_tls_enabled: true
+          asterisk_tls_cert_file: /etc/pbx-ci/cert.pem
+          asterisk_tls_key_file: /etc/pbx-ci/key.pem
           VARS
 
       # The runner is a real Ubuntu VM with systemd, so this is the same code path

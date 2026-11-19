@@ -71,6 +71,34 @@ resource "google_compute_firewall" "sip" {
   }
 }
 
+resource "google_compute_firewall" "sip_tls" {
+  count = var.sip_tls_enabled ? 1 : 0
+
+  name          = "${var.name}-allow-sip-tls"
+  description   = "SIP over TLS (tcp/5061) from the same ranges as plain SIP."
+  network       = google_compute_network.vpc.name
+  direction     = "INGRESS"
+  priority      = 1000
+  source_ranges = var.sip_source_ranges
+  target_tags   = [local.tag]
+
+  allow {
+    protocol = "tcp"
+    ports    = ["5061"]
+  }
+
+  log_config {
+    metadata = "INCLUDE_ALL_METADATA"
+  }
+
+  lifecycle {
+    precondition {
+      condition     = var.allow_open_sip || !contains(var.sip_source_ranges, "0.0.0.0/0")
+      error_message = "sip_source_ranges contains 0.0.0.0/0, which exposes SIP over TLS to the whole internet. List your provider's addresses instead, or set allow_open_sip = true if you really mean it."
+    }
+  }
+}
+
 resource "google_compute_firewall" "rtp" {
   name          = "${var.name}-allow-rtp"
   description   = "RTP media (udp/10000-20000) from the listed media ranges only."
